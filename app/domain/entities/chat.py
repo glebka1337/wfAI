@@ -27,7 +27,6 @@ class DialogSessionSummary(EntityBase):
     Lightweight entity for lists/sidebars.
     Contains NO messages, preventing 'Phantom Message' bugs.
     """
-    persona_id: str 
     title: str = "New Conversation"
     status: ChatStatus = ChatStatus.ACTIVE
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
