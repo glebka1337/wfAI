@@ -1,6 +1,5 @@
 import uuid
 from typing import Annotated, Optional, List, Union
-from datetime import datetime, timezone
 from pydantic import Field
 from beanie import Document, Indexed
 from app.adapters.mongo.models.base import AuditMixin, CreatedMixin
@@ -13,24 +12,18 @@ from app.domain.entities.chat import (
 )
 
 class DialogSessionDoc(Document, AuditMixin):
-    uid: Annotated[str, Indexed(str, unique=True)] = Field(
-        default_factory=lambda: str(uuid.uuid4())
-    )
-    
-    persona_id: Annotated[str, Indexed(str)]
     title: str
     status: str
 
     class Settings:
         name = "sessions"
         indexes = [
-            [("persona_id", 1), ("updated_at", -1)]
+            [("updated_at", -1)]
         ]
 
     def to_summary(self) -> DialogSessionSummary:
         return DialogSessionSummary(
             uid=self.uid,
-            persona_id=self.persona_id,
             title=self.title,
             status=ChatStatus(self.status),
             updated_at=self.updated_at,
@@ -40,7 +33,6 @@ class DialogSessionDoc(Document, AuditMixin):
     def to_entity(self) -> DialogSession:
         return DialogSession(
             uid=self.uid,
-            persona_id=self.persona_id,
             title=self.title,
             status=ChatStatus(self.status),
             messages=[], 
@@ -52,7 +44,6 @@ class DialogSessionDoc(Document, AuditMixin):
     def from_entity(cls, entity: Union[DialogSession, DialogSessionSummary]) -> "DialogSessionDoc":
         return cls(
             uid=entity.uid,
-            persona_id=entity.persona_id,
             title=entity.title,
             status=entity.status.value,
             updated_at=entity.updated_at,
@@ -60,15 +51,10 @@ class DialogSessionDoc(Document, AuditMixin):
         )
 
 class ChatMessageDoc(Document, CreatedMixin): 
-    uid: Annotated[str, Indexed(str, unique=True)] = Field(
-        default_factory=lambda: str(uuid.uuid4())
-    )
-    
     session_id: Annotated[str, Indexed(str)]
     
     role: str
     content: str
-    
     referenced_memory_ids: List[str] = Field(default_factory=list)
     token_count: Optional[int] = None
 

@@ -1,15 +1,10 @@
 from typing import Dict, Annotated
-import uuid
 from pydantic import Field
-from beanie import Document, Indexed
-from app.adapters.mongo.models.base import AuditMixin
+from beanie import Document
+from app.adapters.mongo.models.base import UidMixin
 from app.domain.entities.persona import WaifuPersona
 
-
-class WaifuPersonaDoc(Document, AuditMixin):
-    uid: Annotated[str, Indexed(str, unique=True)] = Field(
-        default_factory=lambda: str(uuid.uuid4())
-    )
+class WaifuPersonaDoc(Document, UidMixin):
     name: str
     system_instruction: str
     traits: Dict[str, Annotated[float, Field(ge=0.0, le=1.0)]] = Field(
@@ -25,8 +20,7 @@ class WaifuPersonaDoc(Document, AuditMixin):
             uid=self.uid,
             name=self.name,
             system_instruction=self.system_instruction,
-            traits=self.traits,
-            created_at=self.created_at
+            traits=self.traits
         )
 
     @classmethod
@@ -35,6 +29,5 @@ class WaifuPersonaDoc(Document, AuditMixin):
             uid=entity.uid,
             name=entity.name,
             system_instruction=entity.system_instruction,
-            traits=entity.traits,
-            created_at=entity.created_at
+            traits=entity.traits
         )
