@@ -1,5 +1,6 @@
+# app/domain/entities/user.py
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 from .base import EntityBase
 
 @dataclass(kw_only=True)

@@ -1,3 +1,4 @@
+# app/domain/entities/memory.py
 from dataclasses import dataclass, field
 from typing import List, Optional
 from app.domain.entities.base import EntityBase

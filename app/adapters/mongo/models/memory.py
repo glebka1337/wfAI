@@ -1,9 +1,15 @@
 from typing import List, Optional, Annotated
+import uuid
 from beanie import Document, Indexed
+from pydantic import Field
 from app.domain.entities.memory import MemoryFragment
-from .base import AuditMixin
+from .base import CreatedMixin # <--- Был Audit, стал Created
 
-class MemoryFragmentDoc(Document, AuditMixin):
+class MemoryFragmentDoc(Document, CreatedMixin):
+    uid: Annotated[str, Indexed(str, unique=True)] = Field(
+        default_factory=lambda: str(uuid.uuid4())
+    )
+    
     content: str
     vector_id: Optional[Annotated[str, Indexed(str)]] = None
     

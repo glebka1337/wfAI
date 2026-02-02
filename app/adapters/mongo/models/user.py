@@ -1,10 +1,14 @@
 from typing import Annotated, List
+import uuid
 from pydantic import Field
 from beanie import Document, Indexed
 from app.adapters.mongo.models.base import AuditMixin
 from app.domain.entities.user import UserProfile
 
 class UserProfileDoc(Document, AuditMixin):
+    uid: Annotated[str, Indexed(str, unique=True)] = Field(
+        default_factory=lambda: str(uuid.uuid4())
+    )
 
     username: Annotated[str, Indexed(str, unique=True)] 
     bio: str = ""

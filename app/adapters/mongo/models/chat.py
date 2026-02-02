@@ -3,8 +3,7 @@ from typing import Annotated, Optional, List, Union
 from datetime import datetime, timezone
 from pydantic import Field
 from beanie import Document, Indexed
-from app.adapters.mongo.models.base import AuditMixin
-# Импортируем обе сущности
+from app.adapters.mongo.models.base import AuditMixin, CreatedMixin
 from app.domain.entities.chat import (
     DialogSession, 
     DialogSessionSummary, 
@@ -13,9 +12,10 @@ from app.domain.entities.chat import (
     ChatStatus
 )
 
-# --- 1. SESSION DOC ---
 class DialogSessionDoc(Document, AuditMixin):
-    uid: Annotated[str, Indexed(str, unique=True)] = Field(default_factory=lambda: str(uuid.uuid4()))
+    uid: Annotated[str, Indexed(str, unique=True)] = Field(
+        default_factory=lambda: str(uuid.uuid4())
+    )
     
     persona_id: Annotated[str, Indexed(str)]
     title: str
@@ -43,7 +43,7 @@ class DialogSessionDoc(Document, AuditMixin):
             persona_id=self.persona_id,
             title=self.title,
             status=ChatStatus(self.status),
-            messages=[], # Empty - waits to be filled in service / repository
+            messages=[], 
             updated_at=self.updated_at,
             created_at=self.created_at
         )
@@ -59,8 +59,10 @@ class DialogSessionDoc(Document, AuditMixin):
             created_at=entity.created_at
         )
 
-class ChatMessageDoc(Document, AuditMixin):
-    uid: Annotated[str, Indexed(str, unique=True)] = Field(default_factory=lambda: str(uuid.uuid4()))
+class ChatMessageDoc(Document, CreatedMixin): 
+    uid: Annotated[str, Indexed(str, unique=True)] = Field(
+        default_factory=lambda: str(uuid.uuid4())
+    )
     
     session_id: Annotated[str, Indexed(str)]
     

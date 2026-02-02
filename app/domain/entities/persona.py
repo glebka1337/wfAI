@@ -1,3 +1,4 @@
+# app/domain/entities/persona.py
 from dataclasses import dataclass, field
 from typing import Dict
 from app.domain.entities.base import EntityBase

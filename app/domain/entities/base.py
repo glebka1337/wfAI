@@ -1,3 +1,4 @@
+# app/domain/entities/base.py
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import uuid
