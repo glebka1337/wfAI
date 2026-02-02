@@ -1,26 +1,27 @@
 from abc import ABC, abstractmethod
-from typing import List
-
+from typing import List, AsyncGenerator, Dict, Any, Optional
 from app.domain.entities.chat import Message
 
 class ILLMClient(ABC):
     """
-    Abstraction over the LLM Provider (e.g., Ollama, vLLM).
-    Strictly handles text generation.
+    Universal interface for interacting with a model
     """
+    
     @abstractmethod
-    async def generate_response(
+    async def stream_chat(
         self, 
-        system_instruction: str, 
-        history: List[Message], 
-        context_fragments: List[str]
-    ) -> str:
+        messages: List[Message], 
+        system_instruction: str,
+        model: str,
+        temperature: float = 0.7,
+        max_tokens: Optional[int] = None,
+        **kwargs: Any
+    ) -> AsyncGenerator[str, None]:
         """
-        Core generation method.
-        
-        :param system_instruction: The raw system prompt defining the Persona.
-        :param history: Recent conversation turns (Short-term memory).
-        :param context_fragments: Retrieved string facts (Long-term memory).
-        :return: The generated text response.
+        :param messages: Session history.
+        :param system_instruction: Persona prompt.
+        :param model: Model name ('llama3', 'gpt-4').
+        :param temperature: Creativity (0.0 - робот, 1.0 - поэт).
+        :param max_tokens: Limit.
         """
-        pass
+        yield ""
