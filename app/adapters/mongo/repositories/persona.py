@@ -1,7 +1,6 @@
 from typing import List, Optional
 import logging
-from pymongo.errors import DuplicateKeyError # Ловим нативные ошибки БД
-
+from pymongo.errors import DuplicateKeyError
 from app.adapters.mongo.models.persona import WaifuPersonaDoc
 from app.domain.entities.persona import WaifuPersona
 from app.domain.exceptions import PersonaAlreadyExists, PersoneNotFound

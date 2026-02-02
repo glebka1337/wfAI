@@ -1,5 +1,6 @@
 import logging
 from typing import List, Optional
+from datetime import datetime
 from app.domain.entities.chat import DialogSession, DialogSessionSummary, Message
 from app.domain.interfaces.repositories.chat import IChatRepository
 from app.domain.exceptions import SessionNotFound
@@ -7,19 +8,19 @@ from app.adapters.mongo.models.chat import DialogSessionDoc, ChatMessageDoc
 
 logger = logging.getLogger(__name__)
 
+INITIAL_LOAD_SIZE = 30 
+
 class MongoChatRepository(IChatRepository):
     """
     Implementation of Chat Persistence using MongoDB.
-    
-    Architecture Note:
-    - Splits concept of 'Session Metadata' (SessionDoc) and 'Content' (MessageDoc).
-    - Handles manual aggregation to build full Domain Entities.
+
+    Manages both Sessions and Messages as a single Aggregate to ensure consistency.
     """
 
     async def create_session(self, session: DialogSession) -> None:
         """
-        Persist a new session. 
-        Note: We ignore session.messages here as a new session starts empty.
+        Creates a new session metadata record. 
+        Messages are empty at creation.
         """
         doc = DialogSessionDoc.from_entity(session)
         await doc.insert()
@@ -27,23 +28,23 @@ class MongoChatRepository(IChatRepository):
 
     async def get_session(self, uid: str) -> Optional[DialogSession]:
         """
-        Retrieves the FULL session aggregate.
-        1. Fetches metadata.
-        2. Fetches recent messages.
-        3. Combines them into a DialogSession entity.
+        Retrieves Session Metadata + Initial Context (last N messages).
+        Does NOT load the full history (OOM protection).
         """
         # 1. Fetch Metadata
         doc = await DialogSessionDoc.find_one(DialogSessionDoc.uid == uid)
         if not doc:
             return None
             
-        # 2. Fetch recent context (Hydration)
+        # 2. Fetch Initial Context (Tail of the chat)
+        # Sort DESC (Newest first) -> Limit -> Fetch
         msg_docs = await ChatMessageDoc.find(
             ChatMessageDoc.session_id == uid
-        ).sort("-created_at").limit(50).to_list()
+        ).sort("-created_at").limit(INITIAL_LOAD_SIZE).to_list()
         
-        # 3. Construct the Full Entity
-        # Convert docs to entities and Reverse (DB: Newest->Oldest | Domain: Oldest->Newest)
+        # 3. Construct Entity
+        # DB returns: [Today, Yesterday, Last Week]
+        # Domain needs: [Last Week, Yesterday, Today] (Chronological)
         messages = [m.to_entity() for m in reversed(msg_docs)]
         
         entity = doc.to_entity() 
@@ -51,10 +52,31 @@ class MongoChatRepository(IChatRepository):
         
         return entity
 
+    async def get_history(
+        self, 
+        session_id: str, 
+        limit: int = 20, 
+        older_than: Optional[datetime] = None # <--- ЧЕЛОВЕЧЕСКИЙ НЕЙМИНГ
+    ) -> List[Message]:
+        """
+        Infinite Scroll: Загрузка истории вверх.
+        """
+        query = (ChatMessageDoc.session_id == session_id)
+    
+        if older_than:
+            query = query & (ChatMessageDoc.created_at < older_than)
+
+        docs = await ChatMessageDoc.find(query)\
+            .sort("-created_at")\
+            .limit(limit)\
+            .to_list()
+        
+        return [doc.to_entity() for doc in reversed(docs)]
+
     async def list_sessions(self, limit: int = 20, offset: int = 0) -> List[DialogSessionSummary]:
         """
         Optimized list for sidebars.
-        Returns LIGHTWEIGHT summaries (no messages).
+        Returns LIGHTWEIGHT summaries (no messages loaded).
         """
         docs = await DialogSessionDoc.find_all()\
             .sort("-updated_at")\
@@ -67,8 +89,7 @@ class MongoChatRepository(IChatRepository):
     
     async def update_session(self, session: DialogSessionSummary) -> None:
         """
-        Updates metadata (title, status, etc).
-        Works with both Summary and Full Session objects.
+        Updates metadata (title, status, updated_at).
         """
         doc = await DialogSessionDoc.find_one(DialogSessionDoc.uid == session.uid)
         
@@ -79,14 +100,15 @@ class MongoChatRepository(IChatRepository):
         doc.title = session.title
         doc.status = session.status.value
         doc.updated_at = session.updated_at
-        doc.persona_id = session.persona_id 
+        # doc.persona_id = session.persona_id  # Uncomment if hot-swap needed
         
         await doc.save()
 
     async def delete_session(self, uid: str) -> None:
         """
         Manual Cascade Delete.
-        Mongo doesn't support FK cascades, so we clean up messages first.
+        1. Delete all messages for this session.
+        2. Delete the session document.
         """
         session_doc = await DialogSessionDoc.find_one(DialogSessionDoc.uid == uid)
         
@@ -99,7 +121,7 @@ class MongoChatRepository(IChatRepository):
             # 2. Delete the session itself
             await session_doc.delete()
             
-            # Pylance Fix: defensive coding in case delete_result is None
+            # Defensive check
             deleted_count = delete_result.deleted_count if delete_result else 0
             
             logger.info(f"Deleted session {uid} and {deleted_count} messages.")
@@ -107,6 +129,9 @@ class MongoChatRepository(IChatRepository):
             logger.info(f"Delete skipped: Session {uid} not found")
 
     async def add_message(self, session_id: str, message: Message) -> None:
+        """
+        Saves a message AND updates the session's timestamp.
+        """
         # 1. Save the message to the separate collection
         msg_doc = ChatMessageDoc.from_entity(message, session_id=session_id)
         await msg_doc.insert()
@@ -120,7 +145,7 @@ class MongoChatRepository(IChatRepository):
 
     async def get_last_messages(self, session_id: str, limit: int = 10) -> List[Message]:
         """
-        Retrieves the context window for the LLM.
+        Retrieves the context window for the LLM (Short-term memory).
         """
         # 1. Fetch N newest messages
         docs = await ChatMessageDoc.find(
@@ -128,5 +153,6 @@ class MongoChatRepository(IChatRepository):
         ).sort("-created_at").limit(limit).to_list()
         
         # 2. Reverse to chronological order (Old -> New)
+        # LLM reads from top to bottom
         entities = [doc.to_entity() for doc in docs]
         return list(reversed(entities))

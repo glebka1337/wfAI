@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
+from datetime import datetime
 from app.domain.entities.chat import DialogSession, DialogSessionSummary, Message
 
 class IChatRepository(ABC):
@@ -19,9 +20,18 @@ class IChatRepository(ABC):
     @abstractmethod
     async def get_session(self, uid: str) -> Optional[DialogSession]:
         """
-        Retrieve a FULL session, including its message history (or a lazy loaded subset).
-        Use this when you intend to interact with the chat (R/W messages).
+        Retrieve a FULL session, including Initial Context (e.g. last 30 messages).
+        Does NOT load full history to prevent OOM.
         """
+        pass
+    
+    @abstractmethod
+    async def get_history(
+        self, 
+        session_id: str, 
+        limit: int = 20, 
+        older_than: Optional[datetime] = None 
+    ) -> List[Message]:
         pass
     
     @abstractmethod
@@ -57,6 +67,6 @@ class IChatRepository(ABC):
     @abstractmethod
     async def get_last_messages(self, session_id: str, limit: int = 10) -> List[Message]:
         """
-        Retrieve the most recent N messages for context window construction.
+        Retrieve the most recent N messages for context window construction (LLM Context).
         """
         pass
