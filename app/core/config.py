@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     LLM_API_KEY: str = "ollama"
     LLM_TEMPERATURE: float = 0.7
     CONTEXT_CHAR_LIMIT: int = 12000 
-    INITIAL_HISTORY_DEPTH: int = 30
+    INITIAL_LOAD_SIZE: int = 30
     
     MONGO_URL: str = "mongodb://localhost:27017"
     DB_NAME: str = "waifu_db"

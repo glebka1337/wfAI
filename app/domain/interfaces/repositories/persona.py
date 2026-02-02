@@ -1,32 +1,25 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
 from app.domain.entities.persona import WaifuPersona
 
 class IPersonaRepository(ABC):
     """
-    Interface for persisting Waifu personalities.
+    Interface for the Single Waifu instance.
+    No IDs, no Lists, no nonsense. Just Her.
     """
-    @abstractmethod
-    async def create(self, persona: WaifuPersona) -> None:
-        pass
-
-    @abstractmethod
-    async def update(self, persona: WaifuPersona) -> None:
-        pass
-
-    @abstractmethod
-    async def get_by_id(self, uid: str) -> Optional[WaifuPersona]:
-        pass
-
-    @abstractmethod
-    async def list_all(self, limit: int = 20, offset: int = 0) -> List[WaifuPersona]:
-        """
-        Retrieve available personas with pagination.
-        :param limit: Max items to fetch (default 20).
-        :param offset: Number of items to skip.
-        """
-        pass
     
     @abstractmethod
-    async def delete(self, uid: str) -> None:
+    async def load(self) -> WaifuPersona:
+        """
+        Retrieves the one and only Waifu from the database.
+        Implementation detail: If the DB is empty, it MUST return a default/initialized Waifu, 
+        so the app never crashes.
+        """
+        pass
+
+    @abstractmethod
+    async def save(self, persona: WaifuPersona) -> None:
+        """
+        Persists changes to the Waifu (Name, Traits, System Prompt).
+        Since she is unique, this is always an update operation on the single record.
+        """
         pass

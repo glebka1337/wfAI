@@ -1,52 +1,55 @@
-from typing import List, Optional
 import logging
-from pymongo.errors import DuplicateKeyError
+from typing import Optional
 from app.adapters.mongo.models.persona import WaifuPersonaDoc
 from app.domain.entities.persona import WaifuPersona
-from app.domain.exceptions import PersonaAlreadyExists, PersoneNotFound
-from app.domain.interfaces.repositories import IPersonaRepository
+from app.domain.interfaces.repositories.persona import IPersonaRepository
 
 logger = logging.getLogger(__name__)
 
 class MongoPersonaRepository(IPersonaRepository):
+    """
+    Implementation of Single Waifu Persistence using MongoDB.
+    Acts as a Singleton store.
+    """
     
-    async def create(self, persona: WaifuPersona) -> None:
-        try:
-            doc = WaifuPersonaDoc.from_entity(persona)
-            await doc.insert()
-        except DuplicateKeyError:
-            logger.warning(f"Attempt to create duplicate persona: {persona.uid}")
-            raise PersonaAlreadyExists(f"Persona {persona.uid} already exists")
+    async def load(self) -> WaifuPersona:
+        """
+        Retrieves the Waifu. If none exists, creates a default one.
+        """
+        # Try to find any persona (since we only have one)
+        doc = await WaifuPersonaDoc.find_all().first_or_none()
+        
+        if doc:
+            return doc.to_entity()
+        
+        # Fallback: Initialize default Waifu if DB is empty
+        logger.info("No Waifu found in DB. Initializing default persona.")
+        default_persona = WaifuPersona(
+            name="Hitagi",
+            system_instruction="You are Hitagi, a sharp-tongued but caring assistant.",
+            traits={"tsundere": 0.8, "intellect": 0.9}
+        )
+        # Persist it immediately so next time we find it
+        new_doc = WaifuPersonaDoc.from_entity(default_persona)
+        await new_doc.insert()
+        
+        return default_persona
 
-    async def update(self, persona: WaifuPersona) -> None:
+    async def save(self, persona: WaifuPersona) -> None:
+        """
+        Persists changes. Uses UPSERT logic based on UID.
+        """
         doc = await WaifuPersonaDoc.find_one(WaifuPersonaDoc.uid == persona.uid)
         
-        if not doc:
-            logger.warning(f"Update failed: Persona {persona.uid} not found")
-            raise PersoneNotFound(f"Persona {persona.uid} not found")
-
-        doc.system_instruction = persona.system_instruction
-        doc.name = persona.name
-        doc.traits = persona.traits
-        
-        await doc.save()
-    
-    async def get_by_id(self, uid: str) -> Optional[WaifuPersona]:
-        doc = await WaifuPersonaDoc.find_one(WaifuPersonaDoc.uid == uid)
-        return doc.to_entity() if doc else None
-    
-    async def list_all(self, limit: int = 20, offset: int = 0) -> List[WaifuPersona]:
-        docs = await WaifuPersonaDoc.find_all()\
-            .skip(offset)\
-            .limit(limit)\
-            .to_list()
-            
-        return [doc.to_entity() for doc in docs]
-
-    async def delete(self, uid: str) -> None:
-        doc = await WaifuPersonaDoc.find_one(WaifuPersonaDoc.uid == uid)
         if doc:
-            await doc.delete()
-            logger.info(f"Persona {uid} deleted")
+            # Update existing
+            doc.name = persona.name
+            doc.system_instruction = persona.system_instruction
+            doc.traits = persona.traits
+            await doc.save()
+            logger.info(f"Waifu '{persona.name}' updated.")
         else:
-            logger.info(f"Delete skipped: Persona {uid} not found")
+            # Create new (rare case if load() wasn't called first)
+            new_doc = WaifuPersonaDoc.from_entity(persona)
+            await new_doc.insert()
+            logger.info(f"Waifu '{persona.name}' saved as new record.")
