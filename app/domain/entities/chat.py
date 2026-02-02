@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional
-from app.domain.entities.base import EntityBase
+from .base import EntityBase
 
 class MessageRole(str, Enum):
     USER = "user"
@@ -21,13 +21,23 @@ class Message(EntityBase):
     token_count: Optional[int] = None
 
 @dataclass(kw_only=True)
-class DialogSession(EntityBase):
+class DialogSessionSummary(EntityBase):
+    """
+    Lightweight entity for lists/sidebars.
+    Contains NO messages, preventing 'Phantom Message' bugs.
+    """
     persona_id: str 
     title: str = "New Conversation"
     status: ChatStatus = ChatStatus.ACTIVE
-    
-    messages: List[Message] = field(default_factory=list)
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+@dataclass(kw_only=True)
+class DialogSession(DialogSessionSummary):
+    """
+    Full entity for active chat interaction.
+    Guaranteed to have a list of messages (even if empty, it's a valid list).
+    """
+    messages: List[Message] = field(default_factory=list)
 
     def add_message(self, msg: Message) -> None:
         self.messages.append(msg)

@@ -1,10 +1,17 @@
 import uuid
-from typing import Annotated, Optional, List
+from typing import Annotated, Optional, List, Union
 from datetime import datetime, timezone
 from pydantic import Field
 from beanie import Document, Indexed
 from app.adapters.mongo.models.base import AuditMixin
-from app.domain.entities.chat import DialogSession, Message, MessageRole, ChatStatus
+# Импортируем обе сущности
+from app.domain.entities.chat import (
+    DialogSession, 
+    DialogSessionSummary, 
+    Message, 
+    MessageRole, 
+    ChatStatus
+)
 
 # --- 1. SESSION DOC ---
 class DialogSessionDoc(Document, AuditMixin):
@@ -20,19 +27,29 @@ class DialogSessionDoc(Document, AuditMixin):
             [("persona_id", 1), ("updated_at", -1)]
         ]
 
+    def to_summary(self) -> DialogSessionSummary:
+        return DialogSessionSummary(
+            uid=self.uid,
+            persona_id=self.persona_id,
+            title=self.title,
+            status=ChatStatus(self.status),
+            updated_at=self.updated_at,
+            created_at=self.created_at
+        )
+
     def to_entity(self) -> DialogSession:
         return DialogSession(
             uid=self.uid,
             persona_id=self.persona_id,
             title=self.title,
             status=ChatStatus(self.status),
-            messages=[], 
+            messages=[], # Empty - waits to be filled in service / repository
             updated_at=self.updated_at,
             created_at=self.created_at
         )
 
     @classmethod
-    def from_entity(cls, entity: DialogSession) -> "DialogSessionDoc":
+    def from_entity(cls, entity: Union[DialogSession, DialogSessionSummary]) -> "DialogSessionDoc":
         return cls(
             uid=entity.uid,
             persona_id=entity.persona_id,
@@ -41,7 +58,6 @@ class DialogSessionDoc(Document, AuditMixin):
             updated_at=entity.updated_at,
             created_at=entity.created_at
         )
-
 
 class ChatMessageDoc(Document, AuditMixin):
     uid: Annotated[str, Indexed(str, unique=True)] = Field(default_factory=lambda: str(uuid.uuid4()))
