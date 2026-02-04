@@ -15,7 +15,7 @@ class IUserProfileRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_default(self) -> Optional[UserProfile]:
+    async def get_profile(self) -> Optional[UserProfile]:
         """
         Get the main (and likely only) user profile.
         """

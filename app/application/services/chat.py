@@ -76,7 +76,7 @@ class ChatService(IChatService):
         persona = await self.persona_repo.load()
         
         # 3. Load Single User (No ID needed, just default)
-        user_profile = await self.user_repo.get_default()
+        user_profile = await self.user_repo.get_profile()
         
         # Fallback values if user profile is empty
         u_name = user_profile.username if user_profile else "User"

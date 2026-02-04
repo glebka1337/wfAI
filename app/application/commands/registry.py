@@ -14,6 +14,9 @@ class CommandRegistry:
         
         logger.info(f'Command map was created: {list(self._cmd_map.keys())}')
     
+    def get_commands(self) -> list[ICommand]:
+        return list(self._cmd_map.values())
+    
     async def process_input(
         self,
         query: str,

@@ -1,0 +1,154 @@
+services:
+  # 0. Frontend
+  frontend:
+    build: ./frontend
+    container_name: waifu_frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_BACKEND_URL=http://app:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Avoid overwriting node_modules with host volume
+    networks:
+      - wfai_network
+
+  # 1. Main Backend
+  app:
+    build: .
+    container_name: waifu_backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    environment:
+      - MONGO_URL=mongodb://mongo:27017
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      # We rely on .env for LLM config, but explicit override just in case:
+      - LLM_BASE_URL=${LLM_BASE_URL}
+      - LLM_API_KEY=${LLM_API_KEY}
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-puller:
+        condition: service_completed_successfully
+      qdrant:
+        condition: service_started
+      mongo:
+        condition: service_started
+    networks:
+      - wfai_network
+
+  # 2. Ollama (Server)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: waifu_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: "ollama list || exit 1"
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    networks:
+      - wfai_network
+
+  # 3. Model Auto-Puller
+  ollama-puller:
+    image: ollama/ollama:latest
+    container_name: waifu_model_puller
+    environment:
+      - OLLAMA_HOST=ollama:11434
+      - MODEL=${DEFAULT_MODEL}
+      # Use Embed model if distinct, otherwise default
+      - EMBED=${EMBEDDING_MODEL}
+    volumes:
+      - ollama_data:/root/.ollama
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - wfai_network
+    entrypoint: /bin/sh
+    command: >
+      -c "echo 'Waiting for Ollama...' &&
+          sleep 5 &&
+          echo \"Pulling LLM: $$MODEL\" &&
+          ollama pull $$MODEL &&
+          echo \"Pulling Embedder: $$EMBED\" &&
+          ollama pull $$EMBED &&
+          echo 'All models ready! Exiting.' "
+
+  # 4. Qdrant
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: waifu_qdrant
+    # Ports hidden from host, accessible only via network
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - wfai_network
+
+  # 5. Mongo
+  mongo:
+    image: mongo:latest
+    container_name: waifu_mongo
+    # Ports hidden from host
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - wfai_network
+
+  # 6. MinIO (S3)
+  minio:
+    image: minio/minio:latest
+    container_name: waifu_minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - wfai_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # 7. Create Buckets
+  createbuckets:
+    image: minio/mc
+    container_name: waifu_createbuckets
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set waifuminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+      /usr/bin/mc mb waifuminio/${S3_BUCKET_NAME} || echo 'Bucket already exists';
+      /usr/bin/mc anonymous set public waifuminio/${S3_BUCKET_NAME};
+      exit 0;
+      "
+    networks:
+      - wfai_network
+
+networks:
+  wfai_network:
+    driver: bridge
+
+volumes:
+  ollama_data:
+  mongo_data:
+  qdrant_data:
+  minio_data:

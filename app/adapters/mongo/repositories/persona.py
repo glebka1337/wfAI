@@ -25,9 +25,9 @@ class MongoPersonaRepository(IPersonaRepository):
         # Fallback: Initialize default Waifu if DB is empty
         logger.info("No Waifu found in DB. Initializing default persona.")
         default_persona = WaifuPersona(
-            name="Hitagi",
-            system_instruction="You are Hitagi, a sharp-tongued but caring assistant.",
-            traits={"tsundere": 0.8, "intellect": 0.9}
+            name="Rebecca",
+            system_instruction="You are Rebecca, a sharp-tongued but caring assistant.",
+            traits={"sharpness": 0.8, "intellect": 0.9}
         )
         # Persist it immediately so next time we find it
         new_doc = WaifuPersonaDoc.from_entity(default_persona)

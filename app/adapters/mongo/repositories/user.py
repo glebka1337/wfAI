@@ -28,7 +28,7 @@ class MongoUserProfileRepository(IUserProfileRepository):
             await new_doc.insert()
             logger.info(f"User profile '{profile.username}' created.")
 
-    async def get_default(self) -> Optional[UserProfile]:
+    async def get_profile(self) -> Optional[UserProfile]:
         """
         Fetch the first available user profile.
         """

@@ -1,9 +1,9 @@
 from typing import Any, AsyncGenerator, Dict, List, Optional
 import openai
+from openai import AsyncOpenAI  
+import logging
 from app.domain.entities.chat import Message, MessageRole
 from app.domain.interfaces.llm import ILLMClient
-from openai import OpenAI
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -12,15 +12,18 @@ class OpenAIClient(ILLMClient):
     def __init__(
         self,
         base_url: str,
-        api_key: str = 'ollama', # for local llm
+        api_key: str = 'ollama', 
+        model: str = "llama3"
     ):
-        self.client = OpenAI(
+
+        self.client = AsyncOpenAI(
             base_url=base_url,
             api_key=api_key,
             max_retries=3
         )
+        self.default_model = model
     
-    def _to_open_ai_forma(
+    def _to_openai_format( 
         self,
         sys_prompt: str,
         messages: List[Message]
@@ -29,12 +32,10 @@ class OpenAIClient(ILLMClient):
         payload = []
         
         if sys_prompt:
-            payload.append(
-                {
-                    "role": "system",
-                    "content": sys_prompt
-                }
-            )
+            payload.append({
+                "role": "system",
+                "content": sys_prompt
+            })
         
         for msg in messages:
             role_str = "assistant" if msg.role == MessageRole.ASSISTANT else "user"
@@ -49,19 +50,24 @@ class OpenAIClient(ILLMClient):
         self, 
         messages: List[Message], 
         system_instruction: str,
-        model: str,
+        model: Optional[str] = None, 
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
         **kwargs: Any
     ) -> AsyncGenerator[str, None]:
         
-        openai_messages = self._to_open_ai_forma(sys_prompt=system_instruction, messages=messages)
+        target_model = model or self.default_model
+        
+        openai_messages = self._to_openai_format(
+            sys_prompt=system_instruction, 
+            messages=messages
+        )
 
         request_params: Dict[str, Any] = {
-            "model": model,
+            "model": target_model,
             "messages": openai_messages,
             "temperature": temperature,
-            "stream": True,
+            "stream": True, 
             **kwargs 
         }
         
@@ -77,16 +83,9 @@ class OpenAIClient(ILLMClient):
                     yield delta.content
 
         except openai.APIConnectionError:
-            logger.error("Connection Error: Is Ollama/LLM running?")
+            logger.critical("Connection Error: Is Ollama running at correct URL?")
             yield "[System Error: LLM Provider Unreachable]"
             
-        except openai.RateLimitError:
-            logger.error("Rate limit exceeded")
-            yield "[System Error: Rate Limit Exceeded]"
-            
-        except openai.APIStatusError as e:
-            logger.error(f"API Error: {e.status_code} - {e.response}")
-            yield f"[System Error: Provider returned {e.status_code}]"
         except Exception as e:
-            logger.exception("Unexpected LLM Client Error")
+            logger.exception("LLM Client Error")
             yield f"[System Error: {str(e)}]"
