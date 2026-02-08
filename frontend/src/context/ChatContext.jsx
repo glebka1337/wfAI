@@ -87,7 +87,7 @@ export const ChatProvider = ({ children }) => {
         }
     };
 
-    const sendMessage = async (content) => {
+    const sendMessage = async (content, useSearch = false) => {
         if (!content.trim() || isStreaming) return;
 
         let sessionId = currentSessionId;
@@ -117,7 +117,7 @@ export const ChatProvider = ({ children }) => {
             setMessages(prev => [...prev, aiMsg]);
 
             let fullResponse = "";
-            const stream = api.streamChat(sessionId, content);
+            const stream = api.streamChat(sessionId, content, useSearch);
 
             for await (const chunk of stream) {
                 fullResponse += chunk;
@@ -140,6 +140,59 @@ export const ChatProvider = ({ children }) => {
             // Optional: Reload history to ensure consistency with backend, 
             // but might cause UI jumpiness. 
             // Better to trust the stream for now.
+        }
+    };
+
+    const regenerateLastMessage = async (useSearch = false) => {
+        if (isStreaming || !currentSessionId) return;
+
+        // Optimistic update: Remove last AI message (if existing) or just prepare to stream
+        // But regenerate logic on backend deletes it. 
+        // Frontend should probably remove it first to show "thinking".
+
+        setMessages(prev => {
+            const newMsgs = [...prev];
+            // Remove last message if it is AI, to make room for new one?
+            // Actually, we can just replace the last AI message with a "..." placeholder
+            // But if the user clicks regenerate on an AI message, we want to replace IT.
+            // Let's check if last is AI.
+            if (newMsgs.length > 0 && newMsgs[newMsgs.length - 1].role === 'ai') {
+                // Clear content
+                newMsgs[newMsgs.length - 1] = {
+                    ...newMsgs[newMsgs.length - 1],
+                    content: '',
+                    isRegenerating: true
+                };
+            } else {
+                // If last is user (e.g. previous generation failed completely?), append new AI placeholder
+                newMsgs.push({ role: 'ai', content: '', timestamp: new Date().toISOString() });
+            }
+            return newMsgs;
+        });
+
+        setIsStreaming(true);
+
+        try {
+            let fullResponse = "";
+            const stream = api.regenerateChat(currentSessionId, useSearch);
+
+            for await (const chunk of stream) {
+                fullResponse += chunk;
+
+                setMessages(prev => {
+                    const newMsgs = [...prev];
+                    const lastMsgIndex = newMsgs.length - 1;
+                    if (lastMsgIndex >= 0 && newMsgs[lastMsgIndex].role === 'ai') {
+                        newMsgs[lastMsgIndex] = { ...newMsgs[lastMsgIndex], content: fullResponse, isRegenerating: false };
+                    }
+                    return newMsgs;
+                });
+            }
+        } catch (e) {
+            console.error(e);
+            setMessages(prev => [...prev, { role: 'system', content: 'Error: Failed to regenerate message' }]);
+        } finally {
+            setIsStreaming(false);
         }
     };
 
@@ -175,6 +228,7 @@ export const ChatProvider = ({ children }) => {
             createNewSession,
             deleteSession,
             sendMessage,
+            regenerateLastMessage,
             personaIconUrl,
             setPersonaIcon: handleSetPersonaIcon
         }}>

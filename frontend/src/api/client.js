@@ -95,11 +95,15 @@ export const setPersonaIcon = async (iconFilename) => {
  * Streams chat response from backend.
  * Yields text chunks as they arrive.
  */
-export async function* streamChat(sessionId, message) {
+export async function* streamChat(sessionId, message, useSearch = false) {
     const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ session_id: sessionId, message }),
+        body: JSON.stringify({
+            session_id: sessionId,
+            message,
+            use_search: useSearch
+        }),
     });
 
     if (!res.ok) throw new Error('Chat stream failed');
@@ -109,6 +113,28 @@ export async function* streamChat(sessionId, message) {
 
     while (true) {
         const { value, done } = await reader.read();
+        if (done) break;
+        yield decoder.decode(value, { stream: true });
+    }
+}
+
+export async function* regenerateChat(sessionId, useSearch = false) {
+    const res = await fetch('/api/chat/regenerate', {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+            session_id: sessionId,
+            use_search: useSearch
+        }),
+    });
+
+    if (!res.ok) throw new Error('Regeneration failed');
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+        const { done, value } = await reader.read();
         if (done) break;
         yield decoder.decode(value, { stream: true });
     }

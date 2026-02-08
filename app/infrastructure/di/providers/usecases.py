@@ -2,6 +2,7 @@ from dishka import Provider, Scope, provide
 
 from app.core.config import Settings
 from app.domain.interfaces.llm import ILLMClient
+from app.domain.interfaces.tools.search import ISearchTool
 from app.domain.interfaces.repositories.chat import IChatRepository
 from app.domain.interfaces.repositories.memory import IMemoryRepository
 from app.domain.interfaces.repositories.user import IUserProfileRepository
@@ -13,6 +14,7 @@ from app.application.commands.registry import CommandRegistry
 # Chat UseCases
 from app.application.usecases.chat.process_message import ProcessMessageUseCase
 from app.application.usecases.chat.get_history import GetChatHistoryUseCase
+from app.application.usecases.chat.regenerate import RegenerateMessageUseCase
 
 # Session UseCases
 from app.application.usecases.session.list_sessions import ListSessionsUseCase
@@ -52,7 +54,8 @@ class UseCasesProvider(Provider):
         chat_repo: IChatRepository,
         user_repo: IUserProfileRepository,
         persona_repo: IPersonaRepository,
-        llm_client: ILLMClient
+        llm_client: ILLMClient,
+        search_tool: ISearchTool
     ) -> ProcessMessageUseCase:
         return ProcessMessageUseCase(
             registry=registry,
@@ -60,12 +63,21 @@ class UseCasesProvider(Provider):
             history_repo=chat_repo,
             user_repo=user_repo,
             persona_repo=persona_repo,
-            llm_client=llm_client
+            llm_client=llm_client,
+            search_tool=search_tool
         )
 
     @provide
     def provide_get_chat_history_use_case(self, chat_repo: IChatRepository) -> GetChatHistoryUseCase:
         return GetChatHistoryUseCase(chat_repo)
+
+    @provide
+    def provide_regenerate_message_use_case(
+        self,
+        chat_repo: IChatRepository,
+        process_message_uc: ProcessMessageUseCase
+    ) -> RegenerateMessageUseCase:
+        return RegenerateMessageUseCase(chat_repo, process_message_uc)
 
     @provide
     def provide_list_sessions_use_case(self, chat_repo: IChatRepository) -> ListSessionsUseCase:

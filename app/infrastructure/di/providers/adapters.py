@@ -3,6 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from qdrant_client import AsyncQdrantClient
 from app.core.config import Settings
 from app.domain.interfaces.llm import ILLMClient
+from app.domain.interfaces.tools.search import ISearchTool
 from app.domain.interfaces.services.embedder import IEmbedder
 from app.adapters.llm.llm_client import OpenAIClient
 from app.adapters.llm.memory import OpenAIEmbedder 
@@ -40,3 +41,8 @@ class AdaptersProvider(Provider):
             base_url=settings.LLM_BASE_URL,
             model=settings.EMBEDDING_MODEL 
         )
+
+    @provide
+    def provide_search_tool(self, settings: Settings) -> ISearchTool:
+        from app.adapters.search.searxng import SearXNGSearchTool
+        return SearXNGSearchTool()

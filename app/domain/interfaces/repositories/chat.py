@@ -70,3 +70,11 @@ class IChatRepository(ABC):
         Retrieve the most recent N messages for context window construction (LLM Context).
         """
         pass
+
+    @abstractmethod
+    async def delete_last_message(self, session_id: str) -> bool:
+        """
+        Remove the most recent message from the session. 
+        Returns True if a message was deleted, False otherwise.
+        """
+        pass

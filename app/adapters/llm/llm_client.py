@@ -38,7 +38,13 @@ class OpenAIClient(ILLMClient):
             })
         
         for msg in messages:
-            role_str = "assistant" if msg.role == MessageRole.ASSISTANT else "user"
+            if msg.role == MessageRole.ASSISTANT:
+                role_str = "assistant"
+            elif msg.role == MessageRole.SYSTEM:
+                role_str = "system"
+            else:
+                role_str = "user"
+
             payload.append({
                 "role": role_str,
                 "content": msg.content

@@ -45,9 +45,9 @@ export default function Sidebar({ isOpen, onToggle }) {
 
     return (
         <>
-            <div className="w-64 h-full bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 relative">
+            <div className="w-64 h-full border-r flex flex-col transition-all duration-300 relative bg-white border-zinc-200 dark:bg-slate-900 dark:border-slate-800">
                 {/* Header */}
-                <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div className="p-4 border-b flex items-center justify-between border-zinc-200 dark:border-slate-800">
                     <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
                         Waifu AI
                     </h1>
@@ -60,7 +60,7 @@ export default function Sidebar({ isOpen, onToggle }) {
                         </button>
                         <button
                             onClick={onToggle}
-                            className="p-2 hover:bg-slate-800 rounded-full text-slate-400 transition-colors"
+                            className="p-2 rounded-full transition-colors text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-slate-400 dark:hover:bg-slate-800"
                         >
                             <ChevronLeft size={16} />
                         </button>
@@ -76,13 +76,13 @@ export default function Sidebar({ isOpen, onToggle }) {
                             className={clsx(
                                 "group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200",
                                 currentSessionId === session.uid
-                                    ? "bg-slate-800 border-l-4 border-indigo-500 shadow-md"
-                                    : "hover:bg-slate-800/50 text-slate-400 hover:text-slate-100"
+                                    ? "border-l-4 border-indigo-500 shadow-sm bg-zinc-100 dark:bg-slate-800"
+                                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100"
                             )}
                         >
                             <div className="flex items-center gap-3 overflow-hidden flex-1">
-                                <MessageSquare size={18} className={currentSessionId === session.uid ? "text-indigo-400" : "text-slate-500"} />
-                                <span className="truncate text-sm font-medium">
+                                <MessageSquare size={18} className={currentSessionId === session.uid ? "text-indigo-400" : "text-zinc-400 dark:text-slate-500"} />
+                                <span className={clsx("truncate text-sm font-medium", currentSessionId === session.uid ? "text-zinc-900 dark:text-slate-100" : "")}>
                                     {session.title || "New Chat"}
                                 </span>
                             </div>
@@ -90,13 +90,13 @@ export default function Sidebar({ isOpen, onToggle }) {
                             <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setEditingSession(session); }}
-                                    className="p-1 hover:text-indigo-400 mr-1"
+                                    className="p-1 hover:text-indigo-400 mr-1 text-zinc-400 dark:text-slate-500"
                                 >
                                     <Edit2 size={14} />
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); deleteSession(session.uid); }}
-                                    className="p-1 hover:text-red-400"
+                                    className="p-1 hover:text-red-400 text-zinc-400 dark:text-slate-500"
                                 >
                                     <Trash2 size={14} />
                                 </button>
@@ -105,7 +105,7 @@ export default function Sidebar({ isOpen, onToggle }) {
                     ))}
 
                     {sessions.length === 0 && !connectionError && (
-                        <div className="text-center text-slate-500 text-sm mt-4">
+                        <div className="text-center text-sm mt-4 text-zinc-400 dark:text-slate-500">
                             No chats yet.
                         </div>
                     )}
@@ -124,31 +124,31 @@ export default function Sidebar({ isOpen, onToggle }) {
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-slate-800 space-y-2">
+                <div className="p-4 border-t space-y-2 border-zinc-200 dark:border-slate-800">
                     <button
                         onClick={() => setShowIcons(true)}
-                        className="w-full flex items-center justify-center p-2 bg-slate-800 hover:bg-slate-700 rounded-md text-slate-400 hover:text-pink-400 transition-colors"
+                        className="w-full flex items-center justify-center p-2 rounded-md transition-colors bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-pink-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-400 dark:hover:text-pink-400"
                     >
                         <ImageIcon size={18} className="mr-2" />
                         Waifu Icons
                     </button>
                     <button
                         onClick={() => setShowCommands(true)}
-                        className="w-full flex items-center justify-center p-2 bg-slate-800 hover:bg-slate-700 rounded-md text-slate-400 hover:text-indigo-400 transition-colors"
+                        className="w-full flex items-center justify-center p-2 rounded-md transition-colors bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-indigo-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-400 dark:hover:text-indigo-400"
                     >
                         <Terminal size={18} className="mr-2" />
                         Commands
                     </button>
                     <button
                         onClick={() => setShowMemories(true)}
-                        className="w-full flex items-center justify-center p-2 bg-slate-800 hover:bg-slate-700 rounded-md text-slate-400 hover:text-pink-400 transition-colors"
+                        className="w-full flex items-center justify-center p-2 rounded-md transition-colors bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-pink-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-400 dark:hover:text-pink-400"
                     >
                         <Brain size={18} className="mr-2" />
                         Memories
                     </button>
                     <button
                         onClick={onToggle}
-                        className="w-full flex items-center justify-center p-2 bg-slate-800 hover:bg-slate-700 rounded-md text-slate-400 transition-colors"
+                        className="w-full flex items-center justify-center p-2 rounded-md transition-colors bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-400"
                     >
                         <ChevronLeft size={20} className="mr-2" />
                         Collapse Sidebar

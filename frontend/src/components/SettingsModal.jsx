@@ -59,33 +59,35 @@ export default function SettingsModal({ onClose, theme, toggleTheme }) {
     // Theme logic moved to App.jsx
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[85vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-slate-100">
+            <div className="w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[85vh] bg-white border border-zinc-200 dark:bg-slate-900 dark:border-slate-800">
 
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-900">
-                    <h2 className="text-xl font-bold text-white">Settings</h2>
+                <div className="flex items-center justify-between p-6 border-b bg-white border-zinc-200 dark:bg-slate-900 dark:border-slate-800">
+                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Settings</h2>
                     <div className="flex gap-2">
                         <button
                             onClick={toggleTheme}
-                            className="p-2 text-slate-400 hover:text-yellow-400 hover:bg-slate-800 rounded-lg transition-colors"
+                            className="p-2 rounded-lg transition-colors text-zinc-500 hover:bg-zinc-100 dark:text-slate-400 dark:hover:bg-slate-800 hover:text-yellow-400"
                             title="Toggle Theme"
                         >
                             {theme === 'dark' ? '🌙' : '☀️'}
                         </button>
-                        <button onClick={onClose} className="text-slate-400 hover:text-white">
+                        <button onClick={onClose} className="text-zinc-500 hover:text-zinc-900 dark:text-slate-400 dark:hover:text-white">
                             <X size={24} />
                         </button>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b border-slate-800 bg-slate-900/50">
+                <div className="flex border-b bg-zinc-50 border-zinc-200 dark:bg-slate-900/50 dark:border-slate-800">
                     <button
                         onClick={() => setActiveTab('user')}
                         className={clsx(
                             "flex-1 py-4 flex items-center justify-center gap-2 text-sm font-medium transition-colors",
-                            activeTab === 'user' ? "text-indigo-400 border-b-2 border-indigo-500 bg-slate-800/50" : "text-slate-400 hover:text-slate-200"
+                            activeTab === 'user'
+                                ? "border-b-2 border-indigo-500 bg-white text-indigo-600 dark:bg-slate-800/50 dark:text-indigo-400"
+                                : "text-zinc-500 hover:text-zinc-900 dark:text-slate-400 dark:hover:text-slate-200"
                         )}
                     >
                         <User size={18} /> User Profile
@@ -94,7 +96,9 @@ export default function SettingsModal({ onClose, theme, toggleTheme }) {
                         onClick={() => setActiveTab('waifu')}
                         className={clsx(
                             "flex-1 py-4 flex items-center justify-center gap-2 text-sm font-medium transition-colors",
-                            activeTab === 'waifu' ? "text-purple-400 border-b-2 border-purple-500 bg-slate-800/50" : "text-slate-400 hover:text-slate-200"
+                            activeTab === 'waifu'
+                                ? "border-b-2 border-purple-500 bg-white text-purple-600 dark:bg-slate-800/50 dark:text-purple-400"
+                                : "text-zinc-500 hover:text-zinc-900 dark:text-slate-400 dark:hover:text-slate-200"
                         )}
                     >
                         <Sparkles size={18} /> Waifu Persona
@@ -102,7 +106,7 @@ export default function SettingsModal({ onClose, theme, toggleTheme }) {
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto flex-1 bg-slate-900">
+                <div className="p-6 overflow-y-auto flex-1 bg-white dark:bg-slate-900">
                     {msg && (
                         <div className={clsx("mb-4 p-3 rounded text-sm", msg.type === 'error' ? "bg-red-900/30 text-red-200" : "bg-green-900/30 text-green-200")}>
                             {msg.text}
@@ -112,21 +116,21 @@ export default function SettingsModal({ onClose, theme, toggleTheme }) {
                     {activeTab === 'user' ? (
                         <div className="space-y-4">
                             <label className="block">
-                                <span className="text-slate-400 text-sm">Username</span>
+                                <span className="text-sm text-zinc-500 dark:text-slate-400">Username</span>
                                 <input
                                     type="text"
                                     value={userData.username}
                                     onChange={e => setUserData({ ...userData, username: e.target.value })}
-                                    className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-indigo-500"
+                                    className="mt-1 w-full rounded-lg p-3 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-500 bg-zinc-50 border border-zinc-200 text-zinc-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                 />
                             </label>
                             <label className="block">
-                                <span className="text-slate-400 text-sm">Bio</span>
+                                <span className="text-sm text-zinc-500 dark:text-slate-400">Bio</span>
                                 <textarea
                                     rows={3}
                                     value={userData.bio}
                                     onChange={e => setUserData({ ...userData, bio: e.target.value })}
-                                    className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-indigo-500"
+                                    className="mt-1 w-full rounded-lg p-3 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-500 bg-zinc-50 border border-zinc-200 text-zinc-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                 />
                             </label>
                         </div>
@@ -134,20 +138,20 @@ export default function SettingsModal({ onClose, theme, toggleTheme }) {
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <label className="block">
-                                    <span className="text-slate-400 text-sm">Name</span>
+                                    <span className="text-sm text-zinc-500 dark:text-slate-400">Name</span>
                                     <input
                                         type="text"
                                         value={waifuData.name}
                                         onChange={e => setWaifuData({ ...waifuData, name: e.target.value })}
-                                        className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500"
+                                        className="mt-1 w-full rounded-lg p-3 focus:outline-none focus:border-purple-500 dark:focus:border-purple-500 bg-zinc-50 border border-zinc-200 text-zinc-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                     />
                                 </label>
                                 <label className="block">
-                                    <span className="text-slate-400 text-sm">Language / Язык</span>
+                                    <span className="text-sm text-zinc-500 dark:text-slate-400">Language / Язык</span>
                                     <select
                                         value={waifuData.language || 'English'}
                                         onChange={e => setWaifuData({ ...waifuData, language: e.target.value })}
-                                        className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                                        className="mt-1 w-full rounded-lg p-3 focus:outline-none focus:border-purple-500 cursor-pointer bg-zinc-50 border border-zinc-200 text-zinc-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                     >
                                         <option value="English">English</option>
                                         <option value="Russian">Russian (Русский)</option>
@@ -156,12 +160,12 @@ export default function SettingsModal({ onClose, theme, toggleTheme }) {
                             </div>
 
                             <label className="block">
-                                <span className="text-slate-400 text-sm">System Instruction</span>
+                                <span className="text-sm text-zinc-500 dark:text-slate-400">System Instruction</span>
                                 <textarea
                                     rows={5}
                                     value={waifuData.system_instruction}
                                     onChange={e => setWaifuData({ ...waifuData, system_instruction: e.target.value })}
-                                    className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500 font-mono text-sm"
+                                    className="mt-1 w-full rounded-lg p-3 focus:outline-none focus:border-purple-500 font-mono text-sm bg-zinc-50 border border-zinc-200 text-zinc-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                 />
                             </label>
 
@@ -177,10 +181,10 @@ export default function SettingsModal({ onClose, theme, toggleTheme }) {
                                 ].map(({ key, label, desc }) => {
                                     const val = waifuData.traits?.[key] ?? 0.5; // Default 0.5
                                     return (
-                                        <div key={key} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700/50">
+                                        <div key={key} className="p-4 rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-slate-800/50 dark:border-slate-700/50">
                                             <div className="flex justify-between items-center mb-2">
-                                                <span className="text-slate-200 font-medium">{label}</span>
-                                                <span className="text-purple-400 font-mono text-sm">
+                                                <span className="font-medium text-zinc-700 dark:text-slate-200">{label}</span>
+                                                <span className="font-mono text-sm text-purple-600 dark:text-purple-400">
                                                     {Math.round(val * 100)}%
                                                 </span>
                                             </div>
@@ -189,10 +193,10 @@ export default function SettingsModal({ onClose, theme, toggleTheme }) {
                                                 type="range" min="0" max="1" step="0.05"
                                                 value={val}
                                                 onChange={e => handleTraitChange(key, e.target.value)}
-                                                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                                                className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-purple-500 bg-zinc-200 dark:bg-slate-700"
                                             />
 
-                                            <p className="text-xs text-slate-500 mt-2">{desc}</p>
+                                            <p className="text-xs mt-2 text-zinc-400 dark:text-slate-500">{desc}</p>
                                         </div>
                                     );
                                 })}
@@ -202,7 +206,7 @@ export default function SettingsModal({ onClose, theme, toggleTheme }) {
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-slate-800 bg-slate-900 flex justify-end">
+                <div className="p-6 border-t flex justify-end bg-white border-zinc-200 dark:bg-slate-900 dark:border-slate-800">
                     <button
                         onClick={handleSave}
                         disabled={loading}

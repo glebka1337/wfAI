@@ -43,7 +43,20 @@ services:
     networks:
       - wfai_network
 
-  # 2. Ollama (Server)
+  # 2. SearXNG (Web Search)
+  searxng:
+    image: searxng/searxng:latest
+    container_name: waifu_searxng
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./searxng:/etc/searxng
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080/
+    networks:
+      - wfai_network
+
+  # 3. Ollama (Server)
   ollama:
     image: ollama/ollama:latest
     container_name: waifu_ollama

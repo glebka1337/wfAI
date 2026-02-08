@@ -1,14 +1,15 @@
 @import "tailwindcss";
 
+/* Tailwind v4: Define dark mode variant using class strategy */
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-slate-900: #0f172a;
 }
 
 @layer base {
   body {
-    background-color: var(--color-slate-900);
-    color: #f1f5f9;
-    /* slate-100 */
+    @apply bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-300;
     @apply antialiased h-screen overflow-hidden;
   }
 

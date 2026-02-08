@@ -116,3 +116,14 @@ class MongoChatRepository(IChatRepository):
         # Reverse for LLM Context (Old -> New)
         entities = [doc.to_entity() for doc in docs]
         return list(reversed(entities))
+
+    async def delete_last_message(self, session_id: str) -> bool:
+        # Find the most recent message
+        last_msg = await ChatMessageDoc.find(
+            ChatMessageDoc.session_id == session_id
+        ).sort("-created_at").first_or_none()
+        
+        if last_msg:
+            await last_msg.delete()
+            return True
+        return False
