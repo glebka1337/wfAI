@@ -11,6 +11,8 @@ class WaifuPersonaDoc(Document, UidMixin):
         default_factory=dict
     )
     is_default: bool = False
+    icon_url: str | None = None
+    language: str = "English"
 
     class Settings:
         name = "personas"
@@ -20,7 +22,9 @@ class WaifuPersonaDoc(Document, UidMixin):
             uid=self.uid,
             name=self.name,
             system_instruction=self.system_instruction,
-            traits=self.traits
+            traits=self.traits,
+            icon_url=self.icon_url,
+            language=self.language
         )
 
     @classmethod
@@ -29,5 +33,7 @@ class WaifuPersonaDoc(Document, UidMixin):
             uid=entity.uid,
             name=entity.name,
             system_instruction=entity.system_instruction,
-            traits=entity.traits
+            traits=entity.traits,
+            icon_url=entity.icon_url,
+            language=entity.language
         )

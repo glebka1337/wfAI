@@ -48,13 +48,28 @@ class ProcessMessageUseCase:
 
         await self._save_user_message(session_id, message_text)
 
-        user_profile = await self.user_repo.get_profile() or self._default_user()
-        waifu_persona = await self.persona_repo.load()
+        import asyncio
+        # Run independent IO tasks in parallel
+        # 1. Fetch user profile and waifu persona (Could be parallelized too, but they are fast mongo lookups)
+        # 2. Search memories (embedding + qdrant search - SLOW)
+        # 3. Get history (mongo query - FAST)
         
-        relevant_memories = await self.memory_repo.search_relevant(message_text, limit=3)
-        chat_history = await self.history_repo.get_last_messages(session_id, limit=10)
+        user_task = self.user_repo.get_profile()
+        persona_task = self.persona_repo.load()
+        memory_task = self.memory_repo.search_relevant(message_text, limit=3)
+        history_task = self.history_repo.get_last_messages(session_id, limit=10)
 
-        system_prompt = self._build_prompt(
+        # Execute all concurrently
+        user_profile, waifu_persona, relevant_memories, chat_history = await asyncio.gather(
+            user_task, 
+            persona_task, 
+            memory_task, 
+            history_task
+        )
+        
+        user_profile = user_profile or self._default_user()
+
+        system_prompt = await self._build_prompt(
             user=user_profile,
             waifu=waifu_persona,
             memories=relevant_memories
@@ -75,7 +90,7 @@ class ProcessMessageUseCase:
         if full_response:
             await self._save_ai_message(session_id, full_response)
 
-    def _build_prompt(
+    async def _build_prompt(
         self, 
         user: UserProfile, 
         waifu: WaifuPersona, 
@@ -83,13 +98,16 @@ class ProcessMessageUseCase:
     ) -> str:
         
         rag_content = "\n".join([f"- {m.content}" for m in memories]) if memories else "No relevant memories."
-        traits_str = ", ".join([f"{k}:{v}" for k, v in waifu.traits.items()])
+        traits_list = [f"{k}: {v:.2f}" for k, v in waifu.traits.items()]
+        traits_str = ", ".join(traits_list)
         time_str = datetime.now().strftime('%H:%M')
 
         return (
             f"Roleplay Instructions:\n"
             f"You are {waifu.name}. {waifu.system_instruction}\n"
-            f"Your traits: {traits_str}.\n\n"
+            f"Your personality traits (scale 0.0-1.0): {traits_str}.\n"
+            f"Note: 0.0 means the trait is absent, 1.0 means it is extremely dominant.\n"
+            f"IMPORTANT: Always respond in {waifu.language if waifu.language else 'English'}.\n\n"
             f"User Profile:\n"
             f"Name: {user.username}\n"
             f"Bio: {user.bio}\n"

@@ -36,6 +36,10 @@ from app.application.usecases.icons.upload_icon import UploadIconUseCase
 from app.application.usecases.icons.list_icons import ListIconsUseCase
 from app.application.usecases.icons.delete_icon import DeleteIconUseCase
 
+# Memory UseCases
+from app.application.usecases.memories.list_memories import ListMemoriesUseCase
+from app.application.usecases.memories.delete_memory import DeleteMemoryUseCase
+
 
 class UseCasesProvider(Provider):
     scope = Scope.REQUEST
@@ -114,3 +118,11 @@ class UseCasesProvider(Provider):
     @provide
     def provide_delete_icon_use_case(self, repo: IWaifuIconRepository) -> DeleteIconUseCase:
         return DeleteIconUseCase(repo)
+
+    @provide
+    def provide_list_memories_use_case(self, repo: IMemoryRepository) -> ListMemoriesUseCase:
+        return ListMemoriesUseCase(repo)
+
+    @provide
+    def provide_delete_memory_use_case(self, repo: IMemoryRepository) -> DeleteMemoryUseCase:
+        return DeleteMemoryUseCase(repo)

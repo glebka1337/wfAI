@@ -46,6 +46,8 @@ class MongoPersonaRepository(IPersonaRepository):
             doc.name = persona.name
             doc.system_instruction = persona.system_instruction
             doc.traits = persona.traits
+            doc.icon_url = persona.icon_url
+            doc.language = persona.language
             await doc.save()
             logger.info(f"Waifu '{persona.name}' updated.")
         else:

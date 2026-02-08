@@ -3,10 +3,10 @@ import { X, User, Sparkles, Save } from 'lucide-react';
 import clsx from 'clsx';
 import * as api from '../api/client';
 
-export default function SettingsModal({ onClose }) {
+export default function SettingsModal({ onClose, theme, toggleTheme }) {
     const [activeTab, setActiveTab] = useState('user'); // 'user' | 'waifu'
     const [userData, setUserData] = useState({ username: '', bio: '' });
-    const [waifuData, setWaifuData] = useState({ name: '', system_instruction: '', traits: {} });
+    const [waifuData, setWaifuData] = useState({ name: '', system_instruction: '', traits: {}, icon_url: null, language: 'English' });
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState({ type: '', text: '' });
 
@@ -56,6 +56,8 @@ export default function SettingsModal({ onClose }) {
         }));
     };
 
+    // Theme logic moved to App.jsx
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[85vh]">
@@ -63,9 +65,18 @@ export default function SettingsModal({ onClose }) {
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-900">
                     <h2 className="text-xl font-bold text-white">Settings</h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white">
-                        <X size={24} />
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={toggleTheme}
+                            className="p-2 text-slate-400 hover:text-yellow-400 hover:bg-slate-800 rounded-lg transition-colors"
+                            title="Toggle Theme"
+                        >
+                            {theme === 'dark' ? '🌙' : '☀️'}
+                        </button>
+                        <button onClick={onClose} className="text-slate-400 hover:text-white">
+                            <X size={24} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tabs */}
@@ -121,15 +132,29 @@ export default function SettingsModal({ onClose }) {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            <label className="block">
-                                <span className="text-slate-400 text-sm">Name</span>
-                                <input
-                                    type="text"
-                                    value={waifuData.name}
-                                    onChange={e => setWaifuData({ ...waifuData, name: e.target.value })}
-                                    className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500"
-                                />
-                            </label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <label className="block">
+                                    <span className="text-slate-400 text-sm">Name</span>
+                                    <input
+                                        type="text"
+                                        value={waifuData.name}
+                                        onChange={e => setWaifuData({ ...waifuData, name: e.target.value })}
+                                        className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500"
+                                    />
+                                </label>
+                                <label className="block">
+                                    <span className="text-slate-400 text-sm">Language / Язык</span>
+                                    <select
+                                        value={waifuData.language || 'English'}
+                                        onChange={e => setWaifuData({ ...waifuData, language: e.target.value })}
+                                        className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                                    >
+                                        <option value="English">English</option>
+                                        <option value="Russian">Russian (Русский)</option>
+                                    </select>
+                                </label>
+                            </div>
+
                             <label className="block">
                                 <span className="text-slate-400 text-sm">System Instruction</span>
                                 <textarea
@@ -140,19 +165,37 @@ export default function SettingsModal({ onClose }) {
                                 />
                             </label>
 
-                            {/* Traits Demo (Only Sharpness/Intellect for now based on backend default) */}
-                            <div className="grid grid-cols-2 gap-4">
-                                {Object.entries(waifuData.traits || {}).map(([trait, val]) => (
-                                    <label key={trait} className="block">
-                                        <span className="text-slate-400 text-sm capitalize">{trait} ({val})</span>
-                                        <input
-                                            type="range" min="0" max="1" step="0.1"
-                                            value={val}
-                                            onChange={e => handleTraitChange(trait, e.target.value)}
-                                            className="w-full mt-2 accent-purple-500"
-                                        />
-                                    </label>
-                                ))}
+                            {/* Traits Demo */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {[
+                                    { key: 'warmth', label: 'Warmth', desc: 'Affectionate vs Cold' },
+                                    { key: 'chaos', label: 'Chaos', desc: 'Predictable vs Random' },
+                                    { key: 'empathy', label: 'Empathy', desc: 'Understanding vs Indifferent' },
+                                    { key: 'sarcasm', label: 'Sarcasm', desc: 'Sincere vs Snarky' },
+                                    { key: 'sharpness', label: 'Sharpness', desc: 'Soft vs Witty/Cutting' },
+                                    { key: 'intellect', label: 'Intellect', desc: 'Simple vs Genius' },
+                                ].map(({ key, label, desc }) => {
+                                    const val = waifuData.traits?.[key] ?? 0.5; // Default 0.5
+                                    return (
+                                        <div key={key} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700/50">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-slate-200 font-medium">{label}</span>
+                                                <span className="text-purple-400 font-mono text-sm">
+                                                    {Math.round(val * 100)}%
+                                                </span>
+                                            </div>
+
+                                            <input
+                                                type="range" min="0" max="1" step="0.05"
+                                                value={val}
+                                                onChange={e => handleTraitChange(key, e.target.value)}
+                                                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                                            />
+
+                                            <p className="text-xs text-slate-500 mt-2">{desc}</p>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

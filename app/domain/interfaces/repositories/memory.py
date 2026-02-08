@@ -17,3 +17,10 @@ class IMemoryRepository(ABC):
     @abstractmethod
     async def delete_fragment(self, vector_id: str) -> None:
         pass
+
+    @abstractmethod
+    async def list_fragments(self, limit: int = 10) -> List[MemoryFragment]:
+        """
+        Returns a list of memory fragments with limit specified.
+        """
+        pass

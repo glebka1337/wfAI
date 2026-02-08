@@ -98,3 +98,27 @@ class QdrantMemoryRepository(IMemoryRepository):
             else:
                 out[k] = v
         return out
+    
+    async def list_fragments(self, limit: int = 10) -> List[MemoryFragment]:
+        """
+        Returns a list of memory fragments with limit specified.
+        """
+        points, _ = await self.client.scroll(
+            collection_name=self.collection_name,
+            limit=limit,
+            with_payload=True
+        )
+        memories = []
+        for res in points:
+            if not res.payload: 
+                continue
+
+            try:
+                res.payload['vector_id'] = str(res.id)                
+                memories.append(MemoryFragment(**res.payload))
+            
+            except TypeError as e: 
+                logger.error(f'Failed to deserialize memory {res.id}: {e}')
+                continue
+        
+        return memories

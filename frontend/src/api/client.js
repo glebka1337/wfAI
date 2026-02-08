@@ -146,3 +146,16 @@ export const updateWaifuPersona = async (data) => {
     if (!res.ok) throw new Error('Failed to update waifu persona');
     return res.json();
 };
+
+// --- MEMORIES ---
+export const fetchMemories = async (limit = 100) => {
+    const res = await fetch(`/api/memories?limit=${limit}`);
+    if (!res.ok) throw new Error('Failed to fetch memories');
+    return res.json();
+};
+
+export const deleteMemory = async (vectorId) => {
+    const res = await fetch(`/api/memories/${vectorId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete memory');
+    return true;
+};

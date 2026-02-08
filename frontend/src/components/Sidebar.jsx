@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { MessageSquare, Plus, Trash2, ChevronLeft, ChevronRight, Edit2, Terminal, Image as ImageIcon } from 'lucide-react';
+import { MessageSquare, Plus, Trash2, ChevronLeft, ChevronRight, Edit2, Terminal, Image as ImageIcon, Brain } from 'lucide-react';
 import { useChat } from '../context/ChatContext';
 import EditSessionModal from './EditSessionModal';
 import CommandsModal from './CommandsModal';
 import WaifuIconsModal from './WaifuIconsModal';
+import MemoriesModal from './MemoriesModal';
 import clsx from 'clsx';
 
 export default function Sidebar({ isOpen, onToggle }) {
@@ -11,6 +12,7 @@ export default function Sidebar({ isOpen, onToggle }) {
     const [editingSession, setEditingSession] = useState(null);
     const [showCommands, setShowCommands] = useState(false);
     const [showIcons, setShowIcons] = useState(false);
+    const [showMemories, setShowMemories] = useState(false);
 
     const handleRename = async (id, newTitle) => {
         try {
@@ -138,6 +140,13 @@ export default function Sidebar({ isOpen, onToggle }) {
                         Commands
                     </button>
                     <button
+                        onClick={() => setShowMemories(true)}
+                        className="w-full flex items-center justify-center p-2 bg-slate-800 hover:bg-slate-700 rounded-md text-slate-400 hover:text-pink-400 transition-colors"
+                    >
+                        <Brain size={18} className="mr-2" />
+                        Memories
+                    </button>
+                    <button
                         onClick={onToggle}
                         className="w-full flex items-center justify-center p-2 bg-slate-800 hover:bg-slate-700 rounded-md text-slate-400 transition-colors"
                     >
@@ -161,6 +170,10 @@ export default function Sidebar({ isOpen, onToggle }) {
 
             {showIcons && (
                 <WaifuIconsModal onClose={() => setShowIcons(false)} />
+            )}
+
+            {showMemories && (
+                <MemoriesModal onClose={() => setShowMemories(false)} />
             )}
         </>
     );

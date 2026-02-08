@@ -2,7 +2,6 @@
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 import uuid
-from app.domain.entities.base import EntityBase
 
 @dataclass(kw_only=True)
 class WaifuPersona:
@@ -11,3 +10,4 @@ class WaifuPersona:
     system_instruction: str
     traits: Dict[str, float] = field(default_factory=dict)
     icon_url: Optional[str] = None
+    language: str = "English"

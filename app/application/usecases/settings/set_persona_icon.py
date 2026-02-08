@@ -27,5 +27,6 @@ class SetPersonaIconUseCase:
             "name": persona.name,
             "system_instruction": persona.system_instruction,
             "traits": persona.traits,
-            "icon_url": persona.icon_url
+            "icon_url": persona.icon_url,
+            "language": persona.language
         }

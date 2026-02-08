@@ -73,7 +73,8 @@ async def get_waifu_persona(
         name=persona.name,
         system_instruction=persona.system_instruction,
         traits=persona.traits,
-        icon_url=persona.icon_url
+        icon_url=persona.icon_url,
+        language=persona.language
     )
 
 @router.patch("/waifu")

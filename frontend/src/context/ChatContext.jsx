@@ -20,9 +20,17 @@ export const ChatProvider = ({ children }) => {
         loadPersonaIcon();
     }, []);
 
+    const justCreatedSessionRef = React.useRef(false);
+
     // Load messages when session changes
     useEffect(() => {
         if (currentSessionId) {
+            // If we just created the session locally, don't load history (it's empty)
+            // This prevents wiping the optimistic message from sendMessage
+            if (justCreatedSessionRef.current) {
+                justCreatedSessionRef.current = false;
+                return;
+            }
             loadHistory(currentSessionId);
         } else {
             setMessages([]);
@@ -80,35 +88,47 @@ export const ChatProvider = ({ children }) => {
     };
 
     const sendMessage = async (content) => {
-        if (!content.trim()) return;
+        if (!content.trim() || isStreaming) return;
 
         let sessionId = currentSessionId;
 
         // Auto-create session if none selected
         if (!sessionId) {
-            sessionId = await createNewSession();
-            if (!sessionId) return;
+            try {
+                const session = await api.createSession();
+                setSessions([session, ...sessions]);
+                justCreatedSessionRef.current = true;
+                setCurrentSessionId(session.uid);
+                sessionId = session.uid;
+            } catch (e) {
+                console.error("Failed to create session:", e);
+                return;
+            }
         }
 
         // Optimistic User Message
-        const userMsg = { role: 'user', content };
+        const userMsg = { role: 'user', content, timestamp: new Date().toISOString() };
         setMessages(prev => [...prev, userMsg]);
         setIsStreaming(true);
 
         try {
             // Placeholder for AI Message
-            setMessages(prev => [...prev, { role: 'ai', content: '' }]);
+            const aiMsg = { role: 'ai', content: '', timestamp: new Date().toISOString() };
+            setMessages(prev => [...prev, aiMsg]);
 
-            // Stream response
             let fullResponse = "";
-            for await (const chunk of api.streamChat(sessionId, content)) {
+            const stream = api.streamChat(sessionId, content);
+
+            for await (const chunk of stream) {
                 fullResponse += chunk;
 
-                // Update last message (AI) with accumulated text
                 setMessages(prev => {
                     const newMsgs = [...prev];
-                    const lastMsg = newMsgs[newMsgs.length - 1];
-                    lastMsg.content = fullResponse;
+                    // Update only the last message which should be the AI one
+                    const lastMsgIndex = newMsgs.length - 1;
+                    if (lastMsgIndex >= 0 && newMsgs[lastMsgIndex].role === 'ai') {
+                        newMsgs[lastMsgIndex] = { ...newMsgs[lastMsgIndex], content: fullResponse };
+                    }
                     return newMsgs;
                 });
             }
@@ -117,6 +137,9 @@ export const ChatProvider = ({ children }) => {
             setMessages(prev => [...prev, { role: 'system', content: 'Error: Failed to send message' }]);
         } finally {
             setIsStreaming(false);
+            // Optional: Reload history to ensure consistency with backend, 
+            // but might cause UI jumpiness. 
+            // Better to trust the stream for now.
         }
     };
 
@@ -133,6 +156,7 @@ export const ChatProvider = ({ children }) => {
         try {
             const updatedPersona = await api.setPersonaIcon(iconFilename);
             setPersonaIconUrl(updatedPersona.icon_url);
+            return updatedPersona;
         } catch (e) {
             console.error('Failed to set persona icon:', e);
             throw e;

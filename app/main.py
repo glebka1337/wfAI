@@ -15,7 +15,7 @@ from app.core.config import settings
 from app.adapters.mongo.models import ALL_DOCUMENT_MODELS
 
 # Import Routers
-from app.adapters.api.routers import chat, sessions, settings as settings_router, commands, icons
+from app.adapters.api.routers import chat, sessions, settings as settings_router, commands, icons, memories
 
 from app.adapters.qdrant.initializer import QdrantInitializer
 
@@ -88,6 +88,7 @@ def create_app() -> FastAPI:
     app.include_router(settings_router.router)
     app.include_router(commands.router)
     app.include_router(icons.router)
+    app.include_router(memories.router)
     
     return app
 

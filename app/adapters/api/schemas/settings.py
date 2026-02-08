@@ -16,6 +16,7 @@ class PersonaUpdate(BaseModel):
     name: Optional[str] = None
     system_instruction: Optional[str] = None
     traits: Optional[Dict[str, float]] = None
+    language: Optional[str] = None
 
 class PersonaResponse(BaseModel):
     uid: str
@@ -23,3 +24,4 @@ class PersonaResponse(BaseModel):
     system_instruction: str
     traits: Dict[str, float]
     icon_url: Optional[str] = None
+    language: str
